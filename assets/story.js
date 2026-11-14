@@ -8,7 +8,7 @@
   var S = window.REPLAY_STORY || {}; var ORDER = S.order || [];
   var LABELS = { ag: 'Activation Agent', bc: 'Branch portal: Conversations', br: 'Branch portal: Recommendations', ob: S.homeLabel || 'Online banking' };
   // A G only where the agent was captured; B R opens Wanda's application in the review story (capture-story.cjs).
-  var TARGET = S.targets || { ag: 'agent-ready', bc: 'branch-conversations', br: 'branch-recommendations' };
+  var TARGET = S.targets || { ag: 'agent-sent', bc: 'branch-conversations', br: 'branch-recommendations' };
   var go = function (f) { if (f) location.href = new URL(f, location.href).href; };
   var view = function () { try { if (window.parent !== window && window.parent.REPLAY_VIEW) return window.parent.REPLAY_VIEW(); } catch (e) { /* opened on its own */ } return 'desktop'; };
   var onlineBanking = function () { var v = view(); var ob = S.home || S.onlineBanking || {}; return ob[v] ? '../' + v + '/' + ob[v] : null; };

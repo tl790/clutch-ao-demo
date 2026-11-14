@@ -138,7 +138,25 @@
     return R.next;
   };
   var guard = null; // a screen can block its main button (e.g. enrollment rules)
-  var forward = function (force) { if (!force && guard && !guard()) return; go(nextFile()); };
+  // ---- Blank, then filled (Tim 2026-11-14): phone, code, SSN last 4, online banking sign-up and the joint / beneficiary
+  // forms open empty. The first Continue or right arrow on an untouched screen swaps in the copy captured with the
+  // persona's values typed in; the next one moves on. Kept per screen in the session store (back, view switch). ----
+  var FILLED = T['filled:' + R.name] || null; var onFilled = [];
+  var isFilled = function () { return !!((load().filled || {})[R.name]); };
+  var showFilled = function () {
+    var root = document.querySelector('[data-replay-fill]'); if (!root || !FILLED) return false;
+    var nextText = next && root.contains(next) ? txt(next) : null;
+    var bx = document.createElement('div'); bx.innerHTML = FILLED; var nr = bx.firstElementChild; if (!nr) return false;
+    root.replaceWith(nr);
+    if (nextText != null) { var nb = nr.querySelector('[data-replay-next]') || Array.prototype.filter.call(nr.querySelectorAll('button'), function (b) { return txt(b) === nextText; }).pop(); if (nb) { nb.setAttribute('data-replay-next', '1'); nb.removeAttribute('disabled'); nb.removeAttribute('aria-disabled'); next = nb; } }
+    var s = load(); s.filled = s.filled || {}; s.filled[R.name] = true; save(s);
+    onFilled.forEach(function (fn) { fn(); }); return true;
+  };
+  var needsFill = function () {
+    if (!FILLED || isFilled()) return false; var root = document.querySelector('[data-replay-fill]'); if (!root) return false;
+    return !Array.prototype.some.call(root.querySelectorAll('input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"]), textarea'), function (i) { return i.value; });
+  };
+  var forward = function (force) { if (needsFill()) { showFilled(); return; } if (!force && guard && !guard()) return; go(nextFile()); };
 
   document.addEventListener('click', function (e) {
     var t = e.target.closest ? e.target.closest('a, button, [role="button"], [role="radio"], label, [data-replay-next], [data-replay-goto]') : null;
@@ -164,10 +182,11 @@
   // (site/<id>/story/; D.story from make-data.cjs: where it starts, which screen leads in, the screen B R opens).
   var SD = D.story || null; var STORY = SD ? '../story/' : null;
   var storyEntry = function () { return !!SD && R.name === SD.from; };
-  window.REPLAY_NAV = function (dir) { if (dir < 0) back(); else if (nextFile()) forward(true); else if (storyEntry()) go(STORY + SD.first + '.html'); };
+  var sideNext = null; // a side screen's own right-arrow step (the joint / beneficiary forms)
+  window.REPLAY_NAV = function (dir) { if (dir < 0) back(); else if (needsFill()) showFilled(); else if (sideNext) sideNext(); else if (nextFile()) forward(true); else if (storyEntry()) go(STORY + SD.first + '.html'); };
   // Two-key pairs, the same as the live demo (Tim 2026-11-13): A G = Activation Agent, B C = branch Conversations,
   // B R = branch Recommendations, O B = online banking. The switch is announced for a moment first.
-  var PAIRS = { ag: ['Activation Agent', 'agent-ready'], bc: ['Branch portal: Conversations', 'branch-conversations'], br: ['Branch portal: Recommendations', SD ? SD.recommendations : 'branch-recommendations'], ob: [file('online-banking') ? 'Online banking' : 'Account opening', null] };
+  var PAIRS = { ag: ['Activation Agent', 'agent-sent'], bc: ['Branch portal: Conversations', 'branch-conversations'], br: ['Branch portal: Recommendations', SD ? SD.recommendations : 'branch-recommendations'], ob: [file('online-banking') ? 'Online banking' : 'Account opening', null] };
   if (SD && SD.kind !== 'agent') delete PAIRS.ag;
   var homeFile = function () { return file('online-banking') || (SD ? file(SD.from) : null); };
   var switchToast = function (label, then) {
@@ -224,30 +243,9 @@
     });
   });
   // Verification code and SSN last 4 (input-otp boxes): any 4 digits fill the boxes; nothing is checked, Continue is
-  // never blocked (Tim 2026-11-04 batch). They open already filled (Tim 2026-11-13: the code 1234, the SSN with the
-  // persona's last 4, the same as the live demo's personas), so Continue or the right arrow moves on without typing; a
-  // view switch brings back what was typed.
-  var SSN_LAST4 = { 'non-member/approved': '1288', 'non-member/step-up': '4417', 'non-member/review': '3064', 'non-member/declined': '0712', member: '5310' };
-  var prefillOf = function (inp) {
-    if (/ssn/i.test(inp.id || '')) return SSN_LAST4[D.persona] || SSN_LAST4[String(D.persona || '').split('/')[0]] || '';
-    return /otp|code/i.test(inp.id || '') ? '1234' : '';
-  };
+  // never blocked (Tim 2026-11-04 batch). They open empty; the first Continue or right arrow shows them filled (fill step below).
   Array.prototype.forEach.call(document.querySelectorAll('input[data-input-otp]'), function (inp) {
     var box = inp.closest('[data-input-otp-container]'); if (!box) return;
-    var prefilled = !inp.value && prefillOf(inp); if (prefilled) inp.value = prefilled;
-    // The first digit typed (or a backspace) into the untouched boxes starts over instead of being refused as a fifth digit.
-    inp.addEventListener('beforeinput', function (e) {
-      if (!prefilled || inp.value !== prefilled) return; prefilled = '';
-      if (/^insert/.test(e.inputType || '') && e.data == null) { inp.value = ''; return; }
-      e.preventDefault(); inp.value = String(e.data || '').replace(/\D/g, '').slice(0, 4); paint();
-      try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (err) { /* not selectable */ }
-    });
-    // WebKit fires no beforeinput into a full password field (the SSN): the key itself starts over there.
-    inp.addEventListener('keydown', function (e) {
-      if (!prefilled || inp.value !== prefilled || e.altKey || e.metaKey || e.ctrlKey || !/^(\d|Backspace|Delete)$/.test(e.key)) return;
-      prefilled = ''; e.preventDefault(); inp.value = /^\d$/.test(e.key) ? e.key : ''; paint();
-      try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (err) { /* not selectable */ }
-    });
     var slots = Array.prototype.filter.call(box.querySelectorAll('div'), function (d) { return /SlotDiv/.test(d.className) && !/FakeCaret/.test(d.className); });
     var show = inp.type !== 'password';
     var paint = function () {
@@ -272,7 +270,7 @@
   // wrapper (view.html) shows it over the whole window when it can; opened on its own, the screen shows it.
   var inWrapper = function (fn) { try { return window.parent !== window && typeof window.parent[fn] === 'function'; } catch (err) { return false; } };
   window.REPLAY_SHORTCUTS = function () {
-    var move = []; if (nextFile() || storyEntry()) move.push({ keys: ['→'], label: storyEntry() ? 'Continue into the story' : 'Next screen' }); move.push({ keys: ['←'], label: 'Previous screen' });
+    var move = []; if (needsFill()) move.push({ keys: ['→'], label: 'Fill in this screen' }); else if (nextFile() || storyEntry() || sideNext) move.push({ keys: ['→'], label: storyEntry() ? 'Continue into the story' : 'Next screen' }); move.push({ keys: ['←'], label: 'Previous screen' });
     var jump = []; if (STORY) Object.keys(PAIRS).forEach(function (k) {
       if (k === 'ob' && (!homeFile() || homeFile() === here)) return;
       jump.push({ keys: k.toUpperCase().split(''), then: true, label: k === 'br' && SD.kind === 'review' ? 'Branch portal: the application in manual review' : PAIRS[k][0] });
@@ -605,9 +603,9 @@
   if (R.name === 'enrollment') {
     var err = document.querySelector('[data-replay-error]'); if (err) err.style.display = 'none';
     var field = function (re) { return Array.prototype.filter.call(document.querySelectorAll('[data-testid="demo-enrollment-option-b"] input'), function (i) { var l = (i.labels && i.labels[0] && txt(i.labels[0])) || i.getAttribute('aria-label') || i.name || ''; return re.test(l); })[0]; };
-    var u = field(/^username/i); var p = field(/^password/i); var r = field(/^retype/i);
-    [u, p, r].forEach(function (i) { if (i) { i.value = ''; i.removeAttribute('value'); } });
+    [field(/^username/i), field(/^password/i), field(/^retype/i)].forEach(function (i) { if (i) { i.value = ''; i.removeAttribute('value'); } });
     guard = function () {
+      var u = field(/^username/i); var p = field(/^password/i); var r = field(/^retype/i); err = document.querySelector('[data-replay-error]');
       var un = u ? u.value : ''; var pw = p ? p.value : ''; var rt = r ? r.value : ''; var problem = null;
       if (un.trim().length < 6) problem = 'Username must be at least 6 characters.';
       else if (pw.length < 8) problem = 'Password must be at least 8 characters.';
@@ -752,8 +750,9 @@
   // same session store as the cart, so it survives the desktop <-> phone switch; the open dialog is part of the switch snapshot.
   var handoffModal = function (dlg) { // same overlay as the cart dialog (modal() is defined below the early return for cart-less screens)
     var o = document.createElement('div'); o.setAttribute('data-replay-cart', '');
-    o.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(17,24,39,.45);display:flex;align-items:center;justify-content:center;overflow:auto';
-    dlg.style.position = 'relative'; dlg.style.inset = 'auto'; dlg.style.transform = 'none'; dlg.style.margin = 'auto'; dlg.style.maxHeight = '100vh'; dlg.style.overflow = 'auto';
+    // The captured dialog keeps the product's own placement and entry animation (centred and scaling in on desktop, a
+    // bottom sheet on the phone); forcing it into the flow made the animation start off to the side (Tim 2026-11-14).
+    o.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(17,24,39,.45)';
     o.appendChild(dlg); document.body.appendChild(o); return o;
   };
   var ELIG = D.eligibility;
@@ -776,7 +775,7 @@
           var h4 = Array.prototype.filter.call(div.querySelectorAll('h4'), function (h) { return (h.textContent || '').trim().toLowerCase() === kk[1].toLowerCase(); })[0]; if (!h4) return; var ol = h4.nextElementSibling;
           if (!pe[kk[0]].length) { h4.remove(); if (ol) ol.remove(); return; }
           var li0 = ol.querySelector('li'); ol.innerHTML = '';
-          pe[kk[0]].forEach(function (x) { var li = li0.cloneNode(true); li.textContent = x.name + ' (invited, pending)'; ol.appendChild(li); });
+          pe[kk[0]].forEach(function (x) { var li = li0.cloneNode(true); li.textContent = x.name + (x.invited === false ? '' : ' (invited, pending)'); ol.appendChild(li); });
         });
         while (hb.firstChild) outer.appendChild(hb.firstChild);
       }
@@ -793,6 +792,8 @@
       list.forEach(function (x, i) {
         var li = li0.cloneNode(true); swapAll(li, capturedName(kind), x.name);
         li.querySelectorAll('[aria-label]').forEach(function (e) { e.setAttribute('aria-label', e.getAttribute('aria-label').replace(capturedName(kind), x.name)); });
+        // Typed in and saved (not invited): no "Invited, pending" chip.
+        if (x.invited === false) Array.prototype.forEach.call(li.querySelectorAll('*'), function (e) { if (e.isConnected && /^invited, pending$/i.test(txt(e)) && !e.querySelector('button')) e.remove(); });
         var del = li.querySelector('[aria-label^="Delete"]');
         if (del) del.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); var s = load(); s.people = peopleOf(); s.people[kind].splice(i, 1); save(s); location.reload(); }, true);
         ul.appendChild(li);
@@ -820,16 +821,26 @@
         var label = txt(b) + ' ' + (b.getAttribute('aria-label') || '');
         b.addEventListener('click', function (e) {
           e.preventDefault(); e.stopPropagation();
-          if (/send invitation/i.test(label)) { var s = load(); s.people = peopleOf(); s.people[kind].push(who); save(s); showHandoff('sent', who); }
+          if (/send invitation/i.test(label)) { var s = load(); s.people = peopleOf(); s.people[kind].push({ name: who.name, email: who.email, invited: true }); save(s); showHandoff('sent', who); }
           else if (/back to the list/i.test(label)) backToList();
           else if (/cancel|close/i.test(label)) { if (phase === 'sent') backToList(); else closeHandoff(); }
         }, true);
       });
       hOverlay = handoffModal(dlg); openNow = { handoff: phase };
     };
-    if (link) link.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); showHandoff('confirm', invitee()); }, true);
+    var bindLink = function () { link = document.querySelector('[data-testid="demo-email-handoff-link"]'); if (link) link.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); showHandoff('confirm', invitee()); }, true); };
+    bindLink(); onFilled.push(bindLink);
     reopen.handoff = function (phase) { var ppl = peopleOf()[kind]; showHandoff(phase, phase === 'sent' && ppl.length ? ppl[ppl.length - 1] : invitee()); };
+    // Save: the first press fills the form, the next adds the person to the list (typed in, not invited).
+    var savePerson = function () { var who = invitee(); var s = load(); s.people = peopleOf(); s.people[kind].push({ name: who.name, email: who.email, invited: false }); save(s); go(file('jb-list')); };
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('main button'); if (!b || !/^save$/i.test(txt(b))) return;
+      e.preventDefault(); e.stopPropagation(); if (needsFill()) showFilled(); else savePerson();
+    }, true);
+    // Right arrow once filled: the joint applicant gets the email invitation (Tim 2026-11-14), the beneficiary is saved.
+    sideNext = function () { if (hOverlay) return; if (kind === 'joint' && link) showHandoff('confirm', invitee()); else savePerson(); };
   }
+  if (FILLED && isFilled()) showFilled();
   // ---- Live: product selection, cart and debit card selector ----
   if (R.live !== 'account-types' && R.live !== 'products') return;
   var tplBox = document.createElement('div'); tplBox.innerHTML = T.cart || '';
@@ -915,8 +926,9 @@
   };
   var modal = function (dlg) {
     var o = document.createElement('div'); o.setAttribute('data-replay-cart', '');
-    o.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(17,24,39,.45);display:flex;align-items:center;justify-content:center;overflow:auto';
-    dlg.style.position = 'relative'; dlg.style.inset = 'auto'; dlg.style.transform = 'none'; dlg.style.margin = 'auto'; dlg.style.maxHeight = '100vh'; dlg.style.overflow = 'auto';
+    // The captured dialog keeps the product's own placement and entry animation (centred and scaling in on desktop, a
+    // bottom sheet on the phone); forcing it into the flow made the animation start off to the side (Tim 2026-11-14).
+    o.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(17,24,39,.45)';
     o.appendChild(dlg); document.body.appendChild(o); return o;
   };
   var renderCart = function () {
