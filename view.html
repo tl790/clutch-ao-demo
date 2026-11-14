@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en"><head><meta name="robots" content="noindex, nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Demo Library</title>
+<style>
+  html, body { margin: 0; height: 100%; } body { display: flex; flex-direction: column; background: #eef0f5; overflow: hidden; }
+  .stage { flex: 1; min-height: 0; display: flex; }
+  .scaler { flex: 1; display: flex; min-width: 0; min-height: 0; }
+  .device { position: relative; flex: 1; display: flex; min-width: 0; }
+  .screen { position: relative; flex: 1; display: flex; flex-direction: column; min-width: 0; background: #fff; }
+  .status, .island, .home { display: none; }
+  iframe { flex: 1; width: 100%; border: 0; display: block; background: #fff; }
+  /* Phone: real iPhone size (390 x 844 screen), scaled as a whole to the space available. */
+  body.v-phone { background: #e4e7ec; }
+  body.v-phone .stage { align-items: center; justify-content: center; padding: 16px; overflow: hidden; }
+  body.v-phone .scaler { flex: none; width: calc(414px * var(--s, 1)); height: calc(868px * var(--s, 1)); }
+  body.v-phone .device { flex: none; width: 414px; height: 868px; padding: 12px; box-sizing: border-box; border-radius: 58px; background: #1d2330; transform: scale(var(--s, 1)); transform-origin: top left;
+    box-shadow: inset 0 0 0 2px #3a4152, inset 0 0 0 5px #0b0e14, 0 24px 56px rgba(16, 24, 40, .35); }
+  body.v-phone .device::before, body.v-phone .device::after { content: ''; position: absolute; width: 4px; border-radius: 2px; background: #2b3242; }
+  body.v-phone .device::before { left: -4px; top: 150px; height: 64px; box-shadow: 0 84px 0 #2b3242; } body.v-phone .device::after { right: -4px; top: 200px; height: 96px; }
+  body.v-phone .screen { width: 390px; flex: none; overflow: hidden; border-radius: 46px; }
+  body.v-phone .status { position: relative; flex: 0 0 50px; display: flex; align-items: center; justify-content: space-between; padding: 6px 30px 0 40px; box-sizing: border-box; color: #101828; font: 600 15px/1 -apple-system, "Segoe UI", Roboto, sans-serif; background: #fff; }
+  body.v-phone .status .icons { display: inline-flex; align-items: center; gap: 6px; }
+  body.v-phone .island { display: block; position: absolute; left: 50%; top: 11px; width: 120px; height: 34px; border-radius: 20px; background: #000; transform: translateX(-50%); }
+  body.v-phone .home { display: block; position: absolute; left: 50%; bottom: 8px; width: 134px; height: 5px; border-radius: 3px; background: rgba(16, 24, 40, .85); transform: translateX(-50%); pointer-events: none; }
+  body.v-phone iframe { width: 390px; }
+  .nb { display: flex; align-items: center; justify-content: center; gap: 10px; height: 32px; font: 500 12px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #4b5563; user-select: none; }
+  .nb button { width: 26px; height: 22px; border: 1px solid #cbd0da; border-radius: 6px; background: #fff; color: #374151; font-size: 15px; line-height: 1; cursor: pointer; padding: 0; }
+  .nb button:disabled { opacity: .35; cursor: default; } .nb .where { min-width: 150px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46vw; }
+  .nb a { color: #4b5563; } .nb kbd { font: inherit; border: 1px solid #cbd0da; border-radius: 3px; padding: 1px 4px; background: #fff; }
+  .nb { position: relative; } .nb .side { position: absolute; right: 12px; top: 0; bottom: 0; display: flex; align-items: center; gap: 12px; }
+  body.bar-hidden .nb { display: none; }
+  .nb { flex: 0 0 32px; border-top: 1px solid #dde1ea; background: #eef0f5; }
+  body.v-phone .nb { border-top: 0; background: transparent; }
+  .nb .switch { width: auto; padding: 0 8px; font-size: 12px; }
+  /* On a real phone the phone view fills the display, no frame. */
+  @media (max-width: 480px) {
+    .nb .hint { display: none; } .nb .where { min-width: 0; max-width: 34vw; }
+    body.v-phone .stage { padding: 0; } body.v-phone .scaler, body.v-phone .device, body.v-phone .screen, body.v-phone iframe { width: 100%; height: 100%; flex: 1; transform: none; }
+    body.v-phone .device { padding: 0; border-radius: 0; box-shadow: none; background: #fff; } body.v-phone .device::before, body.v-phone .device::after, body.v-phone .status, body.v-phone .island, body.v-phone .home { display: none; }
+    body.v-phone .screen { border-radius: 0; } .nb { padding-bottom: env(safe-area-inset-bottom); height: auto; min-height: 36px; }
+  }
+</style></head>
+<body class="v-desktop">
+<div class="stage"><div class="scaler"><div class="device" data-phone-device-shell><div class="screen"><div class="status" aria-hidden="true"><span class="time"></span><span class="island"></span><span class="icons"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1.5 4.5a9.5 9.5 0 0 1 13 0"/><path d="M4.2 7.4a5.6 5.6 0 0 1 7.6 0"/><circle cx="8" cy="10.3" r="1" fill="currentColor" stroke="none"/></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="0.5" y="0.5" width="23" height="12" rx="3.5" stroke="currentColor" opacity="0.4"/><rect x="2" y="2" width="20" height="9" rx="2" fill="currentColor"/><rect x="25" y="4.5" width="2" height="4" rx="1" fill="currentColor" opacity="0.4"/></svg></span></div><iframe title="Replay screen" id="f"></iframe><span class="home" aria-hidden="true"></span></div></div></div></div>
+<div class="nb" role="toolbar" aria-label="Replay navigation" data-replay-bar><button type="button" aria-label="Previous screen" title="Previous screen (←)" data-nav="-1">‹</button><span class="where" aria-live="polite"></span><button type="button" aria-label="Next screen" title="Next screen (→)" data-nav="1">›</button><span class="side"><button type="button" class="switch" data-switch-view title="Switch view (\\)"></button><span class="hint"><kbd>H</kbd> hides</span><a href="index.html">All paths</a></span></div>
+<script>var FIRST = {"r1":{"desktop":"01-get-started.html","phone":"01-get-started.html"},"r2":{"desktop":"01-get-started.html","phone":"01-get-started.html"},"r3a":{"desktop":"01-get-started.html","phone":"01-get-started.html"},"r3b":{"desktop":"01-get-started.html","phone":"01-get-started.html"},"r4":{"desktop":"01-get-started.html","phone":"01-get-started.html"}}; var q = new URLSearchParams(location.search); var r = q.get('r'); if (!FIRST[r]) r = Object.keys(FIRST)[0];
+var view = q.get('v') === 'phone' ? 'phone' : 'desktop'; var s = q.get('s'); var f = document.getElementById('f'); var cur = s && /^(\.\.\/story\/)?[\w.-]+\.html$/.test(s) ? s : FIRST[r][view];
+// The bar is hidden by default (Tim 2026-11-04 batch); H shows or hides it (remembered in this browser); ?bar=1 starts it shown.
+var KEY = 'replay-bar-hidden-v2'; var hidden = true; try { hidden = localStorage.getItem(KEY) !== '0'; } catch (e) { /* storage off */ } if (q.get('bar') === '1') hidden = false;
+var paint = function () { document.body.classList.toggle('bar-hidden', hidden); };
+var fit = function () { var bar = hidden ? 0 : 42; var sc = Math.min(1, (window.innerHeight - bar - 32) / 868, (window.innerWidth - 32) / 414); document.body.style.setProperty('--s', String(Math.max(0.3, sc))); };
+var sw = document.querySelector('[data-switch-view]');
+// Story screens (Activation Agent, branch portal) are presenter and staff views: shown full window in either view.
+var story = false;
+var paintView = function () { var as = story ? 'desktop' : view; document.body.classList.toggle('v-phone', as === 'phone'); document.body.classList.toggle('v-desktop', as !== 'phone'); var dev = document.querySelector('[data-phone-device-shell]'); if (as === 'phone') dev.setAttribute('data-phone-device', ''); else dev.removeAttribute('data-phone-device');
+  sw.textContent = view === 'phone' ? 'Desktop view' : 'Phone view'; sw.setAttribute('aria-label', view === 'phone' ? 'Switch to the desktop view' : 'Switch to the phone view'); fit(); };
+var tick = function () { var t = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).replace(/\s?[AP]M$/, ''); document.querySelector('.time').textContent = t; };
+var url = function (variant, file) { return new URL(r + '/' + variant + '/' + file, location.href).href; };
+var keepAddress = function () { try { var u = new URL(location.href); u.searchParams.set('r', r); u.searchParams.set('v', view); u.searchParams.set('s', cur); history.replaceState(null, '', u); } catch (e) { /* file:// */ } };
+window.REPLAY_TOGGLE_BAR = function () { hidden = !hidden; try { localStorage.setItem(KEY, hidden ? '1' : '0'); } catch (e) { /* storage off */ } paint(); fit(); };
+// Switch view on the screen showing now: take its snapshot, open the same screen in the other set (no history entry).
+window.REPLAY_TOGGLE_VIEW = function () {
+  var w = f.contentWindow; var snap = null; try { snap = w.REPLAY_SNAPSHOT ? w.REPLAY_SNAPSHOT() : null; } catch (e) { /* not a replay screen */ }
+  if (snap && snap.file) cur = snap.file; if (snap) { try { sessionStorage.setItem('replay-switch', JSON.stringify(snap)); } catch (e) { /* private mode */ } }
+  view = view === 'phone' ? 'desktop' : 'phone'; paintView(); keepAddress();
+  try { w.location.replace(url(view, cur)); } catch (e) { f.src = url(view, cur); }
+};
+var nav = function (d) { var w = f.contentWindow; if (w && w.REPLAY_NAV) w.REPLAY_NAV(d); };
+window.REPLAY_VIEW = function () { return view; };
+// A G, B C, B R, O B (same pairs as inside a screen) when the wrapper itself has the keyboard.
+var pairFirst = ''; var pairAt = 0;
+var pairKey = function (e) { var k = (e.key || '').toLowerCase(); if (!/^[a-z]$/.test(k)) { pairFirst = ''; return; } var pair = pairFirst + k; var inTime = Date.now() - pairAt <= 1000; pairFirst = k; pairAt = Date.now();
+  if (inTime && /^(ag|bc|br|ob)$/.test(pair)) { pairFirst = ''; e.preventDefault(); var w = f.contentWindow; try { if (w && w.REPLAY_SWITCH) w.REPLAY_SWITCH(pair); } catch (err) { /* not a replay screen */ } } };
+window.REPLAY_SCREEN = function (x) {
+  // Going back through history can land on a screen of the other set: show the same screen in this view instead.
+  if (!!x.story !== story) { story = !!x.story; paintView(); }
+  if (!x.story && x.variant && x.variant !== view) { try { f.contentWindow.location.replace(url(view, x.file)); } catch (e) { /* ignore */ } return; }
+  cur = x.file; var where = document.querySelector('.where'); where.textContent = (x.index >= 0 ? (x.index + 1) + ' / ' + x.count + ' · ' : '') + (x.title || x.name || '');
+  document.querySelector('[data-nav="1"]').disabled = !x.next; keepAddress();
+  // The browser tab shows the screen's title and the brand's favicon.
+  if (x.title) document.title = x.title;
+  try { var ic = f.contentDocument.querySelector('link[rel="icon"]'); var mine = document.querySelector('link[rel="icon"]'); if (ic) { if (!mine) { mine = document.createElement('link'); mine.rel = 'icon'; document.head.appendChild(mine); } mine.href = ic.href; } } catch (e) { /* ignore */ }
+};
+document.querySelectorAll('[data-nav]').forEach(function (b) { b.addEventListener('click', function () { nav(Number(b.getAttribute('data-nav'))); }); });
+sw.addEventListener('click', function () { window.REPLAY_TOGGLE_VIEW(); });
+document.addEventListener('keydown', function (e) {
+  if (e.altKey || e.metaKey || e.ctrlKey) return; var a = document.activeElement; if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return;
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); nav(e.key === 'ArrowLeft' ? -1 : 1); }
+  if (e.key === 'h' || e.key === 'H') { e.preventDefault(); window.REPLAY_TOGGLE_BAR(); }
+  if (e.key === '\\') { e.preventDefault(); window.REPLAY_TOGGLE_VIEW(); }
+  pairKey(e);
+  // G then L within 1 s: back to the Demo Library (the screen asks first; same as the key pair inside a screen).
+  var k = (e.key || '').toLowerCase(); if (k === 'g') { gAt = Date.now(); return; } if (k === 'l' && gAt && Date.now() - gAt <= 1000) { gAt = 0; e.preventDefault(); var w = f.contentWindow; try { if (w && w.REPLAY_LIBRARY) return w.REPLAY_LIBRARY(); } catch (err) { /* not a replay screen */ } if (window.confirm('Return to the demo library? Your cart will be lost.')) location.href = new URL('index.html', location.href).href; return; } gAt = 0;
+});
+var gAt = 0;
+window.addEventListener('resize', fit); paint(); paintView(); tick(); setInterval(tick, 15000); keepAddress(); f.src = url(view, cur);</script>
+</body></html>

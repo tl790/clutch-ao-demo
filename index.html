@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head><meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clutch FCU · Demo Library</title>
+<style>
+  :root { --ink: #1f2937; --muted: #6b7280; --line: #e5e7eb; --brand: #374151; --bg: #f7f7fb; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 48px 16px; }
+  h1 { font-size: 1.75rem; margin: 0 0 4px; } p { color: var(--muted); margin: 0 0 32px; }
+  .path { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .path h2 { font-size: 1.1rem; margin: 8px 0 4px; } .path span { color: var(--muted); font-size: .9rem; }
+  .who { display: flex; align-items: center; gap: 10px; } .who img { height: 22px; width: auto; max-width: 160px; object-fit: contain; } .who .cu { color: var(--ink); font-weight: 600; font-size: .85rem; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; border-bottom: 1px solid var(--line); }
+  .tabs [role=tab] { appearance: none; border: 0; border-bottom: 3px solid transparent; background: none; padding: 10px 14px; font: 600 15px/1.2 inherit; color: var(--muted); cursor: pointer; margin-bottom: -1px; }
+  .tabs [role=tab][aria-selected=true] { color: var(--ink); border-bottom-color: var(--brand); }
+  .tabs [role=tab]:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+  .tabs .n { display: inline-block; min-width: 1.4em; padding: 1px 6px; margin-left: 4px; border-radius: 999px; background: #eef0f5; color: var(--muted); font-size: .78rem; font-weight: 600; }
+  h2.bn { font-size: 1rem; color: var(--muted); font-weight: 600; margin: 0 0 12px; }
+  a.btn { display: inline-block; padding: 12px 20px; border-radius: 999px; background: var(--brand); color: #fff; text-decoration: none; font-weight: 600; }
+  kbd { font: 600 .8rem/1 inherit; border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px; background: #fff; }
+  .picker { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px 20px; margin: 32px 0 0; }
+  .picker h2 { font-size: 1rem; margin: 0 0 4px; } .picker p { margin: 0 0 12px; font-size: .9rem; }
+  .picker .ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .picker input[type=color] { width: 44px; height: 36px; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+  .picker input[type=text] { width: 96px; height: 34px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; font: 15px ui-monospace, Menlo, monospace; }
+  .picker button { height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: #fff; font: 600 14px/1 inherit; cursor: pointer; }
+  .picker .sample { height: 36px; padding: 0 16px; border-radius: 999px; color: #fff; display: inline-flex; align-items: center; font-weight: 600; }
+  .picker .warn { color: #b42318; font-size: .9rem; margin: 10px 0 0; } .picker .state { color: var(--muted); font-size: .9rem; margin: 10px 0 0; }
+  .ovr { background: #fff; border: 1px dashed #c2410c55; border-radius: 16px; padding: 16px 20px; margin: 16px 0 0; } .ovr h2 { font-size: 1rem; margin: 0 0 4px; } .ovr .tag { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #9a3412; background: #ffedd5; border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: 2px; }
+  .ovr p { margin: 0 0 10px; font-size: .9rem; } .ovr .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 16px; } .ovr label { display: block; font-weight: 600; font-size: .85rem; } .ovr input[type=file] { display: block; margin-top: 4px; font-size: .8rem; max-width: 100%; }
+  .ovr .set { display: block; color: #067647; font-size: .78rem; font-weight: 500; min-height: 1em; } .ovr .err { color: #b42318; font-size: .85rem; } .ovr button { height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: #fff; font: 600 14px/1 inherit; cursor: pointer; margin-top: 12px; }
+</style>
+</head>
+<body><main>
+  <h1>Clutch Federal Credit Union · Demo Library</h1>
+  <p>Prebuilt paths with made-up people. Every screen is a copy of the real flow. The cart is live: choose a bundle, add or remove accounts, change the debit card, and it all carries through to the end. Type anything in the fields. Shortcuts: left and right arrows = previous or next screen; \ = switch between desktop and phone view; H = show or hide the control bar; G then L = return to the demo library. After account opening: A then G = Activation Agent, B then C = branch Conversations, B then R = branch Recommendations, O then B = back to online banking.</p>
+  <div class="path" style="--brand:#7146B5">
+    <div class="who"><img src="r1/brand/logo.png" alt="" onerror="this.remove()"><span class="cu">Clutch Federal Credit Union</span></div>
+    <h2>Non-member · instant approval · bundle</h2><span>Stephen Strange · New Member Rewards Bundle or Starter Bundle</span>
+    <div class="row"><a class="btn" href="view.html?r=r1">Open</a></div>
+  </div>
+  <div class="path" style="--brand:#7146B5">
+    <div class="who"><img src="r2/brand/logo.png" alt="" onerror="this.remove()"><span class="cu">Clutch Federal Credit Union</span></div>
+    <h2>Non-member · step up (ID check) · approved · bundle</h2><span>Natasha Romanoff · Starter Bundle</span>
+    <div class="row"><a class="btn" href="view.html?r=r2">Open</a></div>
+  </div>
+  <div class="path" style="--brand:#7146B5">
+    <div class="who"><img src="r3b/brand/logo.png" alt="" onerror="this.remove()"><span class="cu">Clutch Federal Credit Union</span></div>
+    <h2>Existing member · instant approval</h2><span>Tony Stark · choose a membership, then a bundle</span>
+    <div class="row"><a class="btn" href="view.html?r=r3b">Open</a></div>
+  </div>
+  <div class="path" style="--brand:#7146B5">
+    <div class="who"><img src="r4/brand/logo.png" alt="" onerror="this.remove()"><span class="cu">Clutch Federal Credit Union</span></div>
+    <h2>Non-member · manual review · not booked</h2><span>Wanda Maximoff · Starter Bundle</span>
+    <div class="row"><a class="btn" href="view.html?r=r4">Open</a></div>
+  </div>
+</main>
+
+<script>/* ?setup=1 on the library carries into the paths it opens (the bundle switches show there). */ if (/[?&]setup=1(&|$)/.test(location.search)) document.querySelectorAll('a.btn[href^="view.html"]').forEach(function (a) { a.href += '&setup=1'; });</script>
+</body>
+</html>
