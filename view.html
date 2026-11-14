@@ -42,7 +42,7 @@
 <body class="v-desktop">
 <div class="stage"><div class="scaler"><div class="device" data-phone-device-shell><div class="screen"><div class="status" aria-hidden="true"><span class="time"></span><span class="island"></span><span class="icons"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1.5 4.5a9.5 9.5 0 0 1 13 0"/><path d="M4.2 7.4a5.6 5.6 0 0 1 7.6 0"/><circle cx="8" cy="10.3" r="1" fill="currentColor" stroke="none"/></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="0.5" y="0.5" width="23" height="12" rx="3.5" stroke="currentColor" opacity="0.4"/><rect x="2" y="2" width="20" height="9" rx="2" fill="currentColor"/><rect x="25" y="4.5" width="2" height="4" rx="1" fill="currentColor" opacity="0.4"/></svg></span></div><iframe title="Replay screen" id="f"></iframe><span class="home" aria-hidden="true"></span></div></div></div></div>
 <div class="nb" role="toolbar" aria-label="Replay navigation" data-replay-bar><button type="button" aria-label="Previous screen" title="Previous screen (←)" data-nav="-1">‹</button><span class="where" aria-live="polite"></span><button type="button" aria-label="Next screen" title="Next screen (→)" data-nav="1">›</button><span class="side"><button type="button" class="switch" data-switch-view title="Switch view (\\)"></button><span class="hint"><kbd>H</kbd> hides</span><a href="index.html">All paths</a></span></div>
-<script>var FIRST = {"r1":{"desktop":"01-get-started.html","phone":"01-get-started.html"},"r2":{"desktop":"01-get-started.html","phone":"01-get-started.html"},"r3a":{"desktop":"01-get-started.html","phone":"01-get-started.html"},"r3b":{"desktop":"01-get-started.html","phone":"01-get-started.html"},"r4":{"desktop":"01-get-started.html","phone":"01-get-started.html"}}; var q = new URLSearchParams(location.search); var r = q.get('r'); if (!FIRST[r]) r = Object.keys(FIRST)[0];
+<script>var FIRST = {"r1":{"desktop":"01-get-started.html","phone":"01-get-started.html"},"r2":{"desktop":"01-get-started.html","phone":"01-get-started.html"},"r3a":{"desktop":"01-get-started.html","phone":"01-get-started.html"},"r3b":{"desktop":"01-get-started.html","phone":"01-get-started.html"},"r4":{"desktop":"01-get-started.html","phone":"01-get-started.html"},"r5":{"desktop":"01-get-started.html","phone":"01-get-started.html"},"r6":{"desktop":"01-get-started.html","phone":"01-get-started.html"}}; var q = new URLSearchParams(location.search); var r = q.get('r'); if (!FIRST[r]) r = Object.keys(FIRST)[0];
 var view = q.get('v') === 'phone' ? 'phone' : 'desktop'; var s = q.get('s'); var f = document.getElementById('f'); var cur = s && /^(\.\.\/story\/)?[\w.-]+\.html$/.test(s) ? s : FIRST[r][view];
 // The bar is hidden by default (Tim 2026-11-04 batch); H shows or hides it (remembered in this browser); ?bar=1 starts it shown.
 var KEY = 'replay-bar-hidden-v2'; var hidden = true; try { hidden = localStorage.getItem(KEY) !== '0'; } catch (e) { /* storage off */ } if (q.get('bar') === '1') hidden = false;
@@ -91,6 +91,38 @@ document.addEventListener('keydown', function (e) {
   // G then L within 1 s: back to the Demo Library (the screen asks first; same as the key pair inside a screen).
   var k = (e.key || '').toLowerCase(); if (k === 'g') { gAt = Date.now(); return; } if (k === 'l' && gAt && Date.now() - gAt <= 1000) { gAt = 0; e.preventDefault(); var w = f.contentWindow; try { if (w && w.REPLAY_LIBRARY) return w.REPLAY_LIBRARY(); } catch (err) { /* not a replay screen */ } if (window.confirm('Return to the demo library? Your cart will be lost.')) location.href = new URL('index.html', location.href).href; return; } gAt = 0;
 });
+// The sheet's look is shared by the screens, the story screens and the wrapper (the live demo's sheet looks the same).
+function renderKeySheet(doc, groups) {
+  var el = function (tag, css, text) { var x = doc.createElement(tag); x.style.cssText = css; if (text != null) x.textContent = text; return x; };
+  var box = el('div', 'position:fixed;top:50%;left:50%;z-index:2147483002;box-sizing:border-box;width:min(440px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;transform:translate(-50%,-50%);padding:18px 20px;border-radius:14px;background:rgb(16 24 40 / 96%);box-shadow:0 12px 32px rgb(16 24 40 / 35%);color:#fff;font:14px/1.35 system-ui,sans-serif;text-align:left;pointer-events:none');
+  box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Keyboard shortcuts'); box.setAttribute('data-replay-key-sheet', '');
+  box.appendChild(el('div', 'margin:0 0 12px;font:600 16px/1.3 system-ui,sans-serif', 'Keyboard shortcuts'));
+  groups.forEach(function (g) {
+    box.appendChild(el('div', 'margin:14px 0 6px;color:rgb(255 255 255 / 60%);font:600 11px/1.3 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase', g.title));
+    g.items.forEach(function (s) {
+      var row = el('div', 'display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:baseline;padding:3px 0');
+      var keys = el('span', 'white-space:nowrap;color:rgb(255 255 255 / 60%);font-size:12px');
+      s.keys.forEach(function (k, i) { if (i) keys.appendChild(doc.createTextNode(s.then ? ' then ' : ' + ')); keys.appendChild(el('kbd', 'display:inline-block;min-width:12px;padding:1px 6px;border:1px solid rgb(255 255 255 / 35%);border-radius:4px;color:#fff;font:600 12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;text-align:center', k)); });
+      row.appendChild(keys); row.appendChild(el('span', '', s.label)); box.appendChild(row);
+    });
+  });
+  return box;
+}
+// Hold ? (Shift + /): the keyboard shortcuts of the screen showing, over the whole window; the screen hands over its
+// list (and calls this itself when it has the keyboard). Gone on release, when the window loses focus or the screen changes.
+var keySheet = null;
+window.REPLAY_KEY_SHEET = function (groups) {
+  if (!groups) { if (keySheet) { keySheet.remove(); keySheet = null; } return; }
+  if (!keySheet) { keySheet = renderKeySheet(document, groups); document.body.appendChild(keySheet); }
+};
+var screenShortcuts = function () {
+  var w = f.contentWindow; try { if (w && w.REPLAY_SHORTCUTS) return w.REPLAY_SHORTCUTS(); } catch (e) { /* not a replay screen */ }
+  return [{ title: 'Move through the demo', items: [{ keys: ['→'], label: 'Next screen' }, { keys: ['←'], label: 'Previous screen' }] }, { title: 'Demo controls', items: [{ keys: ['\\'], label: view === 'phone' ? 'Switch to the desktop view' : 'Switch to the phone view' }, { keys: ['H'], label: 'Show or hide the previous / next bar' }, { keys: ['G', 'L'], then: true, label: 'Back to the demo library' }] }, { title: 'Help', items: [{ keys: ['?'], label: 'Hold to show this list' }] }];
+};
+document.addEventListener('keydown', function (e) { if (e.key !== '?' || e.altKey || e.metaKey || e.ctrlKey) return; e.preventDefault(); window.REPLAY_KEY_SHEET(screenShortcuts()); }, true);
+document.addEventListener('keyup', function (e) { if (e.key === '?' || e.key === '/' || e.key === 'Shift') window.REPLAY_KEY_SHEET(null); }, true);
+window.addEventListener('blur', function () { window.REPLAY_KEY_SHEET(null); });
+f.addEventListener('load', function () { window.REPLAY_KEY_SHEET(null); });
 var gAt = 0;
 window.addEventListener('resize', fit); paint(); paintView(); tick(); setInterval(tick, 15000); keepAddress(); f.src = url(view, cur);</script>
 </body></html>

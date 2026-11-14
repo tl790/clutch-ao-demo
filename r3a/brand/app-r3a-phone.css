@@ -36,10 +36,10 @@ body { overscroll-behavior-y: none; text-rendering: optimizelegibility; -webkit-
 .dLaSTo[data-color="white"] { box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 0px; }
 .edtLPd { width: 100px; height: 100px; overflow: hidden; position: absolute; right: 0%; pointer-events: none; }
 .jvjVxo { position: absolute; top: 0px; right: 0px; padding: 5px 2em; text-align: center; transform: translateY(-100%) rotate(90deg) translateX(70.7107%) rotate(-45deg); z-index: 1000; transform-origin: right bottom; background: rgb(214, 51, 51); color: rgb(255, 255, 255); box-shadow: rgba(0, 0, 0, 0.25) 0px 4px 4px; }
-@font-face { font-family: Lato; font-style: italic; font-weight: 400; font-display: swap; src: url("") format("woff2"); unicode-range: U+0-FF; }
-@font-face { font-family: Lato; font-style: normal; font-weight: 400; font-display: swap; src: url("") format("woff2"); unicode-range: U+0-FF; }
-@font-face { font-family: Lato; font-style: normal; font-weight: 700; font-display: swap; src: url("") format("woff2"); unicode-range: U+0-FF; }
-@font-face { font-family: Lato; font-style: normal; font-weight: 900; font-display: swap; src: url("") format("woff2"); unicode-range: U+0-FF; }
+@font-face { font-family: Lato; font-style: italic; font-weight: 400; font-display: swap; src: url("../../assets/17fd977cfdf064e6.woff2") format("woff2"); unicode-range: U+0-FF; }
+@font-face { font-family: Lato; font-style: normal; font-weight: 400; font-display: swap; src: url("../../assets/3f18028a04b3fb39.woff2") format("woff2"); unicode-range: U+0-FF; }
+@font-face { font-family: Lato; font-style: normal; font-weight: 700; font-display: swap; src: url("../../assets/ceaca8172b95b695.woff2") format("woff2"); unicode-range: U+0-FF; }
+@font-face { font-family: Lato; font-style: normal; font-weight: 900; font-display: swap; src: url("../../assets/97ffac24ea5fe5c4.woff2") format("woff2"); unicode-range: U+0-FF; }
 @font-face { font-family: "Albert Sans"; font-style: italic; font-weight: 100 900; font-display: swap; src: url("../../assets/albertsans-i7dMIFdwYjGaAMFtZd_QA1ZeUFWaHi6WZ3Q.woff2") format("woff2"); unicode-range: U+0-FF; }
 @font-face { font-family: "Albert Sans"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("../../assets/albertsans-i7dOIFdwYjGaAMFtZd_QA1ZbYFeQGQyU.woff2") format("woff2"); unicode-range: U+0-FF; }
 :root { --innerHeight: calc(var(--rawInnerVh, 1vh) * 100); --branded-header-height: 64px; --branded-header-margin: 24px; }
@@ -1837,14 +1837,6 @@ body[data-scroll-locked] { --removed-body-scroll-bar-size: 0px; }
   0% { background-position: 200% 0px; }
   100% { background-position: -200% 0px; }
 }
-@-webkit-keyframes iivV { 
-  0% { opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0px); }
-}
-@keyframes iivV { 
-  0% { opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0px); }
-}
 @-webkit-keyframes iAgLJZ { 
   0% { filter: brightness(1); }
   100% { filter: brightness(1.5); }
@@ -1852,6 +1844,14 @@ body[data-scroll-locked] { --removed-body-scroll-bar-size: 0px; }
 @keyframes iAgLJZ { 
   0% { filter: brightness(1); }
   100% { filter: brightness(1.5); }
+}
+@-webkit-keyframes iivV { 
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0px); }
+}
+@keyframes iivV { 
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0px); }
 }
 .gWjMBb { --lp-accent: #fff; --lp-arc: color-mix(in srgb, var(--lp-accent) 85%, #fff); --lp-ill-1: color-mix(in srgb, var(--lp-accent) 72%, #fff); --lp-ill-2: color-mix(in srgb, var(--lp-accent) 52%, #fff); --lp-ill-3: color-mix(in srgb, var(--lp-accent) 34%, #fff); --lp-ill-4: color-mix(in srgb, var(--lp-accent) 18%, #fff); --lp-panel: color-mix(in srgb, var(--lp-accent) 9%, #fff); --lp-ring: color-mix(in srgb, var(--lp-accent) 16%, #fff); flex: 1 1 auto; width: 100%; min-width: 0px; min-height: 100vh; overflow-x: clip; background: rgb(255, 255, 255); color: rgb(18, 18, 18); font-family: "Albert Sans", sans-serif; -webkit-font-smoothing: antialiased; }
 .gWjMBb :where(h1, h2, h3, p) { margin: 0px; }

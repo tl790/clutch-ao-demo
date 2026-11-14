@@ -154,7 +154,7 @@
     if (t.hasAttribute('data-replay-next') || (next && next.contains(t))) { e.preventDefault(); forward(false); return; }
     // Replica close / back buttons on side screens return to Thank You.
     if (/^dd-/.test(R.name || '') && /close|back/i.test(t.getAttribute('aria-label') || '')) { e.preventDefault(); go(R.thankYou); return; }
-    if (t.tagName === 'A' && /^(\/|https?:)/.test(t.getAttribute('href') || '')) e.preventDefault();
+    if (t.tagName === 'A' && (/^(\/|https?:)/.test(t.getAttribute('href') || '') || t.hasAttribute('data-replay-nolink'))) e.preventDefault();
   }, true);
 
   // ---- Previous / next: arrow keys and two small controls ----
@@ -224,9 +224,30 @@
     });
   });
   // Verification code and SSN last 4 (input-otp boxes): any 4 digits fill the boxes; nothing is checked, Continue is
-  // never blocked (Tim 2026-11-04 batch).
+  // never blocked (Tim 2026-11-04 batch). They open already filled (Tim 2026-11-13: the code 1234, the SSN with the
+  // persona's last 4, the same as the live demo's personas), so Continue or the right arrow moves on without typing; a
+  // view switch brings back what was typed.
+  var SSN_LAST4 = { 'non-member/approved': '1288', 'non-member/step-up': '4417', 'non-member/review': '3064', 'non-member/declined': '0712', member: '5310' };
+  var prefillOf = function (inp) {
+    if (/ssn/i.test(inp.id || '')) return SSN_LAST4[D.persona] || SSN_LAST4[String(D.persona || '').split('/')[0]] || '';
+    return /otp|code/i.test(inp.id || '') ? '1234' : '';
+  };
   Array.prototype.forEach.call(document.querySelectorAll('input[data-input-otp]'), function (inp) {
     var box = inp.closest('[data-input-otp-container]'); if (!box) return;
+    var prefilled = !inp.value && prefillOf(inp); if (prefilled) inp.value = prefilled;
+    // The first digit typed (or a backspace) into the untouched boxes starts over instead of being refused as a fifth digit.
+    inp.addEventListener('beforeinput', function (e) {
+      if (!prefilled || inp.value !== prefilled) return; prefilled = '';
+      if (/^insert/.test(e.inputType || '') && e.data == null) { inp.value = ''; return; }
+      e.preventDefault(); inp.value = String(e.data || '').replace(/\D/g, '').slice(0, 4); paint();
+      try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (err) { /* not selectable */ }
+    });
+    // WebKit fires no beforeinput into a full password field (the SSN): the key itself starts over there.
+    inp.addEventListener('keydown', function (e) {
+      if (!prefilled || inp.value !== prefilled || e.altKey || e.metaKey || e.ctrlKey || !/^(\d|Backspace|Delete)$/.test(e.key)) return;
+      prefilled = ''; e.preventDefault(); inp.value = /^\d$/.test(e.key) ? e.key : ''; paint();
+      try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (err) { /* not selectable */ }
+    });
     var slots = Array.prototype.filter.call(box.querySelectorAll('div'), function (d) { return /SlotDiv/.test(d.className) && !/FakeCaret/.test(d.className); });
     var show = inp.type !== 'password';
     var paint = function () {
@@ -247,6 +268,54 @@
     if (e.altKey || e.metaKey || e.ctrlKey || typing() || e.key !== '\\') return;
     try { if (window.parent !== window && window.parent.REPLAY_TOGGLE_VIEW) { e.preventDefault(); window.parent.REPLAY_TOGGLE_VIEW(); } } catch (err) { /* opened on its own */ }
   });
+  // Hold ? (Shift + /): the keyboard shortcuts that work on this screen, in a small dark sheet that goes on release. The
+  // wrapper (view.html) shows it over the whole window when it can; opened on its own, the screen shows it.
+  var inWrapper = function (fn) { try { return window.parent !== window && typeof window.parent[fn] === 'function'; } catch (err) { return false; } };
+  window.REPLAY_SHORTCUTS = function () {
+    var move = []; if (nextFile() || storyEntry()) move.push({ keys: ['→'], label: storyEntry() ? 'Continue into the story' : 'Next screen' }); move.push({ keys: ['←'], label: 'Previous screen' });
+    var jump = []; if (STORY) Object.keys(PAIRS).forEach(function (k) {
+      if (k === 'ob' && (!homeFile() || homeFile() === here)) return;
+      jump.push({ keys: k.toUpperCase().split(''), then: true, label: k === 'br' && SD.kind === 'review' ? 'Branch portal: the application in manual review' : PAIRS[k][0] });
+    });
+    var view = R.variant; try { if (inWrapper('REPLAY_VIEW')) view = window.parent.REPLAY_VIEW(); } catch (err) { /* opened on its own */ }
+    var controls = [];
+    if (inWrapper('REPLAY_TOGGLE_VIEW')) controls.push({ keys: ['\\'], label: view === 'phone' ? 'Switch to the desktop view' : 'Switch to the phone view' });
+    if (inWrapper('REPLAY_TOGGLE_BAR')) controls.push({ keys: ['H'], label: 'Show or hide the previous / next bar' });
+    controls.push({ keys: ['G', 'L'], then: true, label: 'Back to the demo library' });
+    return [{ title: 'Move through the demo', items: move }, { title: 'Jump to', items: jump }, { title: 'Demo controls', items: controls }, { title: 'Help', items: [{ keys: ['?'], label: 'Hold to show this list' }] }].filter(function (g) { return g.items.length; });
+  };
+  // The sheet's look is shared by the screens, the story screens and the wrapper (the live demo's sheet looks the same).
+  function renderKeySheet(doc, groups) {
+    var el = function (tag, css, text) { var x = doc.createElement(tag); x.style.cssText = css; if (text != null) x.textContent = text; return x; };
+    var box = el('div', 'position:fixed;top:50%;left:50%;z-index:2147483002;box-sizing:border-box;width:min(440px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;transform:translate(-50%,-50%);padding:18px 20px;border-radius:14px;background:rgb(16 24 40 / 96%);box-shadow:0 12px 32px rgb(16 24 40 / 35%);color:#fff;font:14px/1.35 system-ui,sans-serif;text-align:left;pointer-events:none');
+    box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Keyboard shortcuts'); box.setAttribute('data-replay-key-sheet', '');
+    box.appendChild(el('div', 'margin:0 0 12px;font:600 16px/1.3 system-ui,sans-serif', 'Keyboard shortcuts'));
+    groups.forEach(function (g) {
+      box.appendChild(el('div', 'margin:14px 0 6px;color:rgb(255 255 255 / 60%);font:600 11px/1.3 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase', g.title));
+      g.items.forEach(function (s) {
+        var row = el('div', 'display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:baseline;padding:3px 0');
+        var keys = el('span', 'white-space:nowrap;color:rgb(255 255 255 / 60%);font-size:12px');
+        s.keys.forEach(function (k, i) { if (i) keys.appendChild(doc.createTextNode(s.then ? ' then ' : ' + ')); keys.appendChild(el('kbd', 'display:inline-block;min-width:12px;padding:1px 6px;border:1px solid rgb(255 255 255 / 35%);border-radius:4px;color:#fff;font:600 12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;text-align:center', k)); });
+        row.appendChild(keys); row.appendChild(el('span', '', s.label)); box.appendChild(row);
+      });
+    });
+    return box;
+  }
+  var keySheet = null;
+  var showKeySheet = function () {
+    if (inWrapper('REPLAY_KEY_SHEET')) { window.parent.REPLAY_KEY_SHEET(window.REPLAY_SHORTCUTS()); return; }
+    if (!keySheet) { keySheet = renderKeySheet(document, window.REPLAY_SHORTCUTS()); document.body.appendChild(keySheet); }
+  };
+  var hideKeySheet = function () {
+    if (inWrapper('REPLAY_KEY_SHEET')) window.parent.REPLAY_KEY_SHEET(null);
+    if (keySheet) { keySheet.remove(); keySheet = null; }
+  };
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== '?' || e.altKey || e.metaKey || e.ctrlKey || typing()) return;
+    e.preventDefault(); showKeySheet();
+  }, true);
+  document.addEventListener('keyup', function (e) { if (e.key === '?' || e.key === '/' || e.key === 'Shift') hideKeySheet(); }, true);
+  window.addEventListener('blur', hideKeySheet);
   // Tell the wrapper which screen is showing (its bar shows the position and keeps the address current).
   try { if (window.parent !== window && window.parent.REPLAY_SCREEN) window.parent.REPLAY_SCREEN({ file: here, variant: R.variant, name: R.name, next: !!nextFile() || R.name === 'funding-type' || storyEntry(), index: (R.screens || []).filter(function (x) { return !x.side; }).map(function (x) { return x.file; }).indexOf(location.pathname.split('/').pop()), count: (R.screens || []).filter(function (x) { return !x.side; }).length, title: document.title }); } catch (err) { /* opened on its own */ }
   if (R.auto) setTimeout(function () { go(nextFile()); }, R.auto);
@@ -402,16 +471,12 @@
   if (!R.live && !R.side) { applyCart(); lendingStatus(); }
   if (!R.live) fixAccountRefs();
   // Member number on the screens after the Membership group choice: the new number for a new membership, the existing
-  // one otherwise; online banking shows it under the total balance.
+  // one otherwise.
   var screenAt = function (f) { return (R.screens || []).map(function (x) { return x.file; }).indexOf(f); };
   if (MPATH && file('membership-choice') && screenAt(here) > screenAt(file('membership-choice'))) {
     var mnum = MPATH === 'new' ? D.newMemberNumber : D.memberNumber;
     var anyNum = new RegExp('\\b(' + reEsc(D.memberNumber) + '|' + reEsc(D.newMemberNumber) + ')\\b', 'g');
     replaceAllText(document.body, anyNum, function () { return mnum; });
-    if (R.name === 'online-banking' && !document.querySelector('[data-replay-member]')) {
-      var tb0 = texts(document.body).filter(function (n) { return /^\s*Total balance\s*$/.test(n.nodeValue); })[0];
-      if (tb0 && tb0.parentElement) { var mp = document.createElement('p'); mp.setAttribute('data-replay-member', ''); mp.textContent = 'Membership number ' + mnum; mp.style.cssText = 'margin:0 0 4px;font-size:13px;color:inherit;opacity:.8'; tb0.parentElement.parentElement.insertBefore(mp, tb0.parentElement); }
-    }
   }
   if (R.name === 'terms') { var stt = load(); document.querySelectorAll('[data-replay-item] input').forEach(function (inp) { var id = inp.closest('[data-replay-item]').getAttribute('data-replay-item'); var tv = typedAmt(stt, id); inp.value = tv != null ? tv : (minOf(id) % 1 ? minOf(id).toFixed(2) : String(minOf(id))); }); }
   if (R.name === 'bank-authorization') { var amt0 = money(total(load())); texts(document.body).forEach(function (n) { if (/^\s*\$[\d,]+\.\d\d\s*$/.test(n.nodeValue)) n.nodeValue = n.nodeValue.replace(/\$[\d,]+\.\d\d/, amt0); }); }

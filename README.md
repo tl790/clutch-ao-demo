@@ -8,7 +8,7 @@ in the browser: no server, no backend, no network calls, nothing is sent anywher
 invented for the demo. Typed entries accept any value.
 
 ## Open it
-Open the site's address (it ends in `/clutch-ao-demo/`). The **Demo Library** lists the 5 paths.
+Open the site's address (it ends in `/clutch-ao-demo/`). The **Demo Library** lists the 7 paths.
 
 ## Use it
 Prebuilt paths with made-up people. Every screen is a copy of the real flow. The cart is live: choose a bundle, add or
